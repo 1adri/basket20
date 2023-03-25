@@ -12,47 +12,21 @@ screen = pygame.display.set_mode((game_width, game_height))
 clock = pygame.time.Clock()
 running = True
 color = (255,255,255)
-  
-# light shade of the button
 color_light = (170,170,170)
-  
-# dark shade of the button
 color_dark = (100,100,100)
-  
 width = screen.get_width()
-  
-# stores the height of the
-# screen into a variable
 height = screen.get_height()
-  
-# defining a font
 smallfont = pygame.font.Font('aachen.ttf',35)
-  
-# rendering a text written in
-# this font
 text = smallfont.render('PLAY' , True , color)
-#motion1 = False
-
-# Load the basketball image
-
-
-# Set the starting position of the basketball
-
-
-# Set the initial velocity of the basketball
 basketball_velocity_x = 0
 basketball_velocity_y = 0
-score =0
-# Set the gravity constant
-GRAVITY = 0.5
-shooted=False
-hello = False
 score = 0
-score_add=  0
-#rect = pygame.Rect(760, 285, 40, 50)
-#pygame.draw.rect(screen, (255, 255, 255), rect)
+GRAVITY = 0.5
+shooted = False
+prev_touching = False
+in_air = False
 class Basketball:
-    def __init__(self, screen, running, basketball, player_x, player_y, player_facing_left, background, Y_VELOCITY, Y_GRAVITY, JUMP_HEIGHT, basketball_x, basketball_y, shooted):
+    def __init__(self, screen, running, basketball, player_x, player_y, player_facing_left, background, Y_VELOCITY, Y_GRAVITY, JUMP_HEIGHT, basketball_x, basketball_y):
         self.screen = screen
         self.running = running
         self.basketball = basketball
@@ -65,90 +39,85 @@ class Basketball:
         self.JUMP_HEIGHT = JUMP_HEIGHT
         self.basketball_x = basketball_x
         self.basketball_y = basketball_y
-
-
-        self.shooted = shooted
+        
     def main(self):
-        #print(type(self.basketball))
+        global shooted
         if not shooted:
             if self.player_facing_left:
-
                 self.basketball_x = self.player_x+26
                 self.basketball_y = self.player_y+70
-                #rect2 = pygame.Rect(self.basketball_x+26, self.basketball_y+70, 40, 47)
-
-                #self.screen.blit(self.basketball, (self.basketball_x, self.basketball_y))
-
 
             else:
 
                 self.basketball_x = self.player_x+115
                 self.basketball_y = self.player_y+70
-                #rect2 = pygame.Rect(self.basketball_x, self.basketball_y, 40, 47)
-                global circle2_pos
+
+                global circle2_pos, circle2_rad
                 circle2_pos = (self.basketball_x+20, self.basketball_y+21)
-                global circle2_rad
+
                 circle2_rad= 19
-                pygame.draw.circle(self.screen, (255, 255, 255), (circle2_pos), 19, width=0)
 
             self.screen.blit(self.basketball, (self.basketball_x, self.basketball_y))
 
             #pygame.draw.rect(self.screen, (255, 255, 255), rect2)
 
         else:
-            global basketball_x2, basketball_y2
-            global basketball_velocity_x, basketball_velocity_y
+            global in_air
+            in_air = True
+            if in_air:
+                global basketball_x2, basketball_y2
+                global basketball_velocity_x, basketball_velocity_y
 
-            if basketball_x2 > 5 and basketball_x2 < 915:
-                if basketball_y2 > 0 and basketball_y2 < 500:
-                    basketball_x2 += basketball_velocity_x
-                    basketball_y2 += basketball_velocity_y
-                    # Apply gravity to the basketball
-                    #basketball_velocity_y += GRAVITY
-            basketball_velocity_y += GRAVITY
-            #rect2 = pygame.Rect(basketball_x2, basketball_y2, 40, 47)
-            #pygame.draw.rect(self.screen, (255, 255, 255), rect2)
-            circle2_pos = (basketball_x2+20, basketball_y2+21)
-            pygame.draw.circle(self.screen, (255, 255, 255), (circle2_pos), circle2_rad, width=0)
-            #screen.blit(b)
+                if basketball_x2 > 5 and basketball_x2 < 915:
+                    if basketball_y2 > 0 and basketball_y2 < 450:
+                        if not self.check_collision():
 
-            # Draw the screen
-            screen.blit(self.basketball, (basketball_x2, basketball_y2))  # Draw the basketball
+                                    basketball_x2 += basketball_velocity_x
+                                    basketball_y2 += basketball_velocity_y
+                                    basketball_velocity_y += GRAVITY
 
-            global hello
-            global score, score_add
-            if self.check_collision():
-                score_add = 1
+                                    # Apply gravity to the basketball
+                                    #basketball_velocity_y += GRAVITY
+                        else:
+                            basketball_velocity_y += .1
+                            basketball_y2 += basketball_velocity_y
 
 
+                circle2_pos = (basketball_x2+20, basketball_y2+21)
 
+
+                screen.blit(self.basketball, (basketball_x2, basketball_y2)) 
+                #print(basketball_x2-72, self.player_x)
+                if self.player_x >= basketball_x2-72:
+                    shooted = False
+                    screen.blit(self.background, (0,0))
+                    self.main()
+                print(basketball_y2)
+                if basketball_y2 > 450:
+                    in_air = False
             
-
-
+                    
 
 
 
     def set_baspos(self):
         global basketball_x2, basketball_y2
         global basketball_velocity_x, basketball_velocity_y
+
         basketball_velocity_x = 10
         basketball_velocity_y = -10
 
 
         basketball_x2 = self.player_x+115
         basketball_y2 = self.player_y+70
+
     def check_collision(self):
         dx = circle2_pos[0] - circle1_pos[0]
         dy = circle2_pos[1] - circle1_pos[1]
         distance = math.sqrt(dx ** 2 + dy ** 2)
 
-        # Check for collision between the circles
         if distance <= circle1_rad + circle2_rad:
             return True
-
-
-
-
 
 class Player:
     def __init__(self, screen, running, background, player, player_x, player_y, player_speed, player_size, player_facing_left, player_hitbox, player_alive, isjump, jumping,  Y_GRAVITY, JUMP_HEIGHT, Y_VELOCITY):
@@ -170,25 +139,21 @@ class Player:
         self.Y_VELOCITY = Y_VELOCITY
 
     async def main(self):
-        # Everything under 'while running' will be repeated over and over again
         self.running = True
-        pygame.event.set_allowed(None) # makes no events allowed
-        pygame.event.set_allowed(pygame.QUIT) # Start setting what events we care about
+        pygame.event.set_allowed(None) 
+        pygame.event.set_allowed(pygame.QUIT) 
         pygame.event.set_allowed(pygame.KEYDOWN)
-        #pygame.event.set_allowed(pygame.KEYDOWN)
+
 
         while self.running:
 
-            #basketball = Basketball(self.screen, self.running, pygame.image.load('basketball.png').convert_alpha(), self.player_x, self.player_y, self.player_facing_left,
-                                    #motion1, pygame.image.load('background.png').convert_alpha(),1, 16, 16, self.player_x+80, self.player_y+75)
+
             global circle1_pos
-            circle1_pos = (780, 305)
+            circle1_pos = (780, 300)
             global circle1_rad
-            circle1_rad = 23
-            pygame.draw.circle(screen, (255, 255, 255), (circle1_pos), 23, width=0)
-
+            circle1_rad = 13
+            #print(in_air)
             self.screen.blit(self.background, (0, 0))
-
             keys = pygame.key.get_pressed()
 
             # Makes the game stop if the player clicks the X or presses esc
@@ -204,37 +169,33 @@ class Player:
                     global shooted
                     shooted = True
                     basketball.set_baspos()
+
             basketball = Basketball(self.screen, self.running, pygame.image.load('basketball.png').convert_alpha(), self.player_x, self.player_y, self.player_facing_left,
-                                     pygame.image.load('background.png').convert_alpha(), 5, 3, 2,  self.player_x+80, self.player_y+75,  shooted)
+                                     pygame.image.load('background.png').convert_alpha(), 5, 3, 2,  self.player_x+80, self.player_y+75)
 
 
             basketball.main()
-            global score_add
-            if score_add == 1:
-                global score
-                score += 1
-                score_add = 0
-            print(score)
+
+            global score
+            touching = basketball.check_collision()
+            if touching and not prev_touching:
+                score +=1
+            prev_touching = touching
 
             if keys[pygame.K_a]:
-                #print(self.player_x, self.player_y)
                 if self.player_x > 0:
                     self.player_x -= self.player_speed
                     self.player_facing_left = True
 
                 #player_y += player_speed
             if keys[pygame.K_LSHIFT]:
-                #print(self.player_x, self.player_y)
-
                     if keys[pygame.K_d]:
                         if self.player_x < 850:
                             self.player_x += 3.5
-                        #player_facing_left = False
                     if keys[pygame.K_a]:
                         if self.player_x > 0:
-
                             self.player_x -= 3.5
-                        #player_facing_left = True
+
             if keys[pygame.K_d]:
                 #print(self.player_x, self.player_y)
                 if self.player_x < 850:
@@ -249,26 +210,16 @@ class Player:
                     self.jumping = False
                     self.Y_VELOCITY = self.JUMP_HEIGHT
 
-                
-            # Spawn a new Enemy whenever enemy_timer hits 0
-
-
             # Draw Player
             global player_small
             player_small = pygame.transform.scale(self.player, (int(self.player_size*.7), int(self.player_size*.7)))
-
             screen.blit(player_small, (self.player_x, self.player_y))
-            #rect.colliderect(player_small.rect)
-            #print(type(player_small))
 
+            text2 = smallfont.render(str(score) , True , (0, 0, 0))
+            screen.blit(text2, (470,10))
 
-            #merged = self.player.copy()
-
-            #screen.blit(score_text, (1600, 30))
-            #print(score)
-            # Update Screen
             pygame.display.update()
-            clock.tick(50)
+            clock.tick()
             await asyncio.sleep(0)
             pygame.display.set_caption("FPS: " + str(clock.get_fps()))
 
@@ -285,45 +236,28 @@ async def main_menu():
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 running = False
                 
-            #checks if a mouse is clicked
             if ev.type == pygame.MOUSEBUTTONDOWN:
-                #if the mouse is clicked on the
-                # button the game is terminated
+
                 if width/2.5 <= mouse[0] <= width/2+45 and height/2.3 <= mouse[1] <= height/2+10:
                     await jordan.main()
 
-        # fills the screen with a color
         screen.fill((190,0,50))
         
-        # stores the (x,y) coordinates into
-        # the variable as a tuple
-        
-        # if mouse is hovered on a button it
-        # changes to lighter shade 
+
         if width/2.5 <= mouse[0] <= width/2+45 and height/2.3 <= mouse[1] <= height/2+10:
             pygame.draw.rect(screen,color_light,[width/2.5,height/2.3,140,40])
             
         else:
             pygame.draw.rect(screen,color_dark,[width/2.5,height/2.3,140,40])
         
-        # superimposing the text onto our button
+
         screen.blit(text, (width/2.325,height/2.27))
 
-        # updates the frames of the game
+
         pygame.display.update()
-        await asyncio.sleep(0)  # Very important, and keep it 0
-    #pygame.quit()
-'''
-def main():
-    run = True
-    while run:
-        for ev in pygame.event.get():
-            if ev.type == pygame.QUIT:
-                running = False
-            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
-                running = False
-        main_menu()
-'''
+        await asyncio.sleep(0)  
+
+
 asyncio.run(main_menu())
 
 #[Diff](https://diffy.org/diff/3626b7ae7b5fc)
